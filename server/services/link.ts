@@ -19,24 +19,25 @@ const getEntries = async (uid: Common.UID.ContentType, field?: string): Promise<
 
 export default ({ strapi }: { strapi: Strapi }) => ({
 	async getContentTypes(): Promise<Schema.ContentType[]> {
-		const { contentTypes } = strapi;
+		const contentTypes = Object.entries(strapi.contentTypes as { [uid: string]: Schema.ContentType });
 
-		return Promise.all<Schema.ContentType[]>(
-			await Object.entries(contentTypes).reduce<Promise<Schema.ContentType[]>>(async (a, [uid, value]) => {
-				if (!uid.includes('api::')) {
-					return a;
-				}
+		return contentTypes.reduce<Schema.ContentType[]>((a, [uid, value]) => {
+			if (!uid.includes('api::')) {
+				return a;
+			}
 
-				return [...(await a), value];
-			}, Promise.resolve([]))
-		);
+			if (value.kind === 'collectionType' && Object.keys(value.attributes).includes('slug') && value.attributes['slug'].type === 'string') {
+				return [...a, value];
+			} else if (value.kind === 'singleType') {
+				return [...a, value];
+			}
+
+			return a;
+		}, []);
 	},
 	async getSlug(slug: Omit<Slug, 'slug'>, field?: string): Promise<Slug | null> {
 		if (slug.kind === 'singleType') {
-			return {
-				...slug,
-				slug: getSlug('todo'),
-			};
+			return { ...slug, slug: getSlug('todo') };
 		}
 
 		const entry = await strapi.entityService?.findOne(slug.uid, slug.id, {
@@ -44,12 +45,7 @@ export default ({ strapi }: { strapi: Strapi }) => ({
 			fields: ['slug'],
 		});
 
-		return entry
-			? {
-					...slug,
-					slug: getSlug(entry['slug']),
-			  }
-			: null;
+		return entry ? { ...slug, slug: getSlug(entry['slug']) } : null;
 	},
 	async getSlugs(options: SlugOptions): Promise<Slug[]> {
 		if (options.kind === 'singleType') {

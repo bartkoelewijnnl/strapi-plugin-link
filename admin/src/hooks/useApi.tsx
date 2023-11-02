@@ -4,6 +4,7 @@ import { LoadingModel } from '../types';
 import { SlugOptions, Slug } from '../../../server/types';
 import { useGet } from './useGet';
 import { useSlugs } from './useSlugs';
+import { usePost } from './usePost';
 
 const useApi = () => {
 	const fetchContentTypes = (): LoadingModel<Schema.ContentType[]> => {
@@ -14,9 +15,14 @@ const useApi = () => {
 		return useSlugs(options);
 	};
 
+	const fetchSlug = (slug: Omit<Slug, 'slug'>): LoadingModel<Slug> => {
+		return usePost<Slug>(`/${pluginId}/slug`, slug);
+	};
+
 	return {
 		fetchContentTypes,
 		fetchSlugs,
+		fetchSlug,
 	};
 };
 

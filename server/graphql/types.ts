@@ -16,6 +16,7 @@ export const getTypes = ({ shadowTypes, strapi, nexus }: { shadowTypes: ShadowTy
 								id: Entity.ID;
 								uid: Common.UID.ContentType;
 								kind: Schema.ContentTypeKind;
+								label: string;
 							} | null = root[field];
 
 							if (!slug) {
@@ -38,6 +39,7 @@ export const getTypes = ({ shadowTypes, strapi, nexus }: { shadowTypes: ShadowTy
 				t.nonNull.field('id', { type: 'ID' });
 				t.nonNull.string('uid');
 				t.nonNull.string('kind');
+				t.string('label');
 				t.string('slug');
 			},
 		}),

@@ -8,8 +8,8 @@ exports.default = {
             handler: 'link.getContentTypes',
             config: {
                 auth: false,
-                policies: []
-            }
+                policies: [],
+            },
         },
         {
             method: 'POST',
@@ -17,8 +17,17 @@ exports.default = {
             handler: 'link.getSlugs',
             config: {
                 auth: false,
-                policies: []
-            }
-        }
-    ]
+                policies: [],
+            },
+        },
+        {
+            method: 'POST',
+            path: '/slug',
+            handler: 'link.getSlug',
+            config: {
+                auth: false,
+                policies: [],
+            },
+        },
+    ],
 };

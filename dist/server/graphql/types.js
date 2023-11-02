@@ -31,6 +31,7 @@ const getTypes = ({ shadowTypes, strapi, nexus }) => {
                 t.nonNull.field('id', { type: 'ID' });
                 t.nonNull.string('uid');
                 t.nonNull.string('kind');
+                t.string('label');
                 t.string('slug');
             },
         }),

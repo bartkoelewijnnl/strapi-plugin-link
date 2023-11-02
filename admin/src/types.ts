@@ -9,4 +9,5 @@ export type LinkValue = {
 	uid: Common.UID.ContentType;
 	id: Entity.ID;
 	kind: Schema.ContentTypeKind;
+	label: string;
 } | null;

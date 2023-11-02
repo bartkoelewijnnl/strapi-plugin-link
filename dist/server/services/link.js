@@ -18,32 +18,30 @@ const getEntries = async (uid, field) => {
 };
 exports.default = ({ strapi }) => ({
     async getContentTypes() {
-        const { contentTypes } = strapi;
-        return Promise.all(await Object.entries(contentTypes).reduce(async (a, [uid, value]) => {
+        const contentTypes = Object.entries(strapi.contentTypes);
+        return contentTypes.reduce((a, [uid, value]) => {
             if (!uid.includes('api::')) {
                 return a;
             }
-            return [...(await a), value];
-        }, Promise.resolve([])));
+            if (value.kind === 'collectionType' && Object.keys(value.attributes).includes('slug') && value.attributes['slug'].type === 'string') {
+                return [...a, value];
+            }
+            else if (value.kind === 'singleType') {
+                return [...a, value];
+            }
+            return a;
+        }, []);
     },
     async getSlug(slug, field) {
         var _a;
         if (slug.kind === 'singleType') {
-            return {
-                ...slug,
-                slug: getSlug('todo'),
-            };
+            return { ...slug, slug: getSlug('todo') };
         }
         const entry = await ((_a = strapi.entityService) === null || _a === void 0 ? void 0 : _a.findOne(slug.uid, slug.id, {
             // TODO make modular.
             fields: ['slug'],
         }));
-        return entry
-            ? {
-                ...slug,
-                slug: getSlug(entry['slug']),
-            }
-            : null;
+        return entry ? { ...slug, slug: getSlug(entry['slug']) } : null;
     },
     async getSlugs(options) {
         if (options.kind === 'singleType') {
