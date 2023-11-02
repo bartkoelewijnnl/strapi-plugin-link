@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTypes = void 0;
 const getTypes = ({ shadowTypes, strapi, nexus }) => {
-    const types = Object.entries(shadowTypes).map(([uid, shadow]) => {
+    const types = Object.values(shadowTypes).map((shadow) => {
         return nexus.extendType({
             type: shadow.globalId,
             // TODO: Auth(?).

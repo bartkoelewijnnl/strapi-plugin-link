@@ -2,11 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getFields = exports.getShadowTypes = void 0;
 const getShadowTypes = ({ strapi }) => {
+    const components = Object.entries(strapi.components);
     const contentTypes = Object.entries(strapi.contentTypes);
-    const shadow = contentTypes.reduce((a, [uid, value]) => {
-        if (!uid.includes('api::')) {
-            return a;
-        }
+    const shadow = [...components, ...contentTypes].reduce((a, [uid, value]) => {
         const fields = (0, exports.getFields)(value.attributes);
         if (Boolean(fields.length)) {
             return {
@@ -27,7 +25,7 @@ const getFields = (attributes) => {
         if (!attribute.hasOwnProperty('customField') && attribute.type !== 'json') {
             return a;
         }
-        if (attribute.customField === 'plugin::link.link') {
+        if (attribute['customField'] === 'plugin::link.link') {
             return [...a, field];
         }
         return a;

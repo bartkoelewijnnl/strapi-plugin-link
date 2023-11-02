@@ -1,15 +1,16 @@
-import { Attribute, Common, Schema, Strapi } from '@strapi/strapi';
+import { Common, Schema, Strapi } from '@strapi/strapi';
 
 export type ShadowType = { fields: string[]; globalId: string };
 export type ShadowTypes = { [uid: Common.UID.ContentType]: ShadowType };
+export type UIDSchema = {
+	[uid: string]: Schema.ContentType | Schema.Component;
+};
 
 export const getShadowTypes = ({ strapi }: { strapi: Strapi }): ShadowTypes => {
-	const contentTypes = Object.entries<Schema.ContentType>(strapi.contentTypes as { [uid: string]: Schema.ContentType });
-	const shadow = contentTypes.reduce<ShadowTypes>((a, [uid, value]) => {
-		if (!uid.includes('api::')) {
-			return a;
-		}
+	const components = Object.entries(strapi.components as UIDSchema);
+	const contentTypes = Object.entries(strapi.contentTypes as UIDSchema);
 
+	const shadow = [...components, ...contentTypes].reduce<ShadowTypes>((a, [uid, value]) => {
 		const fields = getFields(value.attributes);
 
 		if (Boolean(fields.length)) {
@@ -34,7 +35,7 @@ export const getFields = (attributes: Schema.Attributes): string[] => {
 			return a;
 		}
 
-		if ((attribute as Attribute.OfType<Attribute.Kind> & { customField: string }).customField === 'plugin::link.link') {
+		if (attribute['customField'] === 'plugin::link.link') {
 			return [...a, field];
 		}
 
