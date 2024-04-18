@@ -13,13 +13,16 @@ import {
 	Stack,
 	IconButton,
 	TextInput,
+	Button,
+	Link
 } from '@strapi/design-system';
 import { Trash } from '@strapi/icons';
-import { LinkValue } from '../../types';
+import { DeepPartial, LinkValue } from '../../types';
 import useApi from '../../hooks/useApi';
 import ComboboxSlugs from '../ComboboxSlugs';
 import LinkIconButton from '../LinkIconButton';
 import useSlug from '../../hooks/useSlug';
+
 
 interface LinkFieldProps {
 	value?: string | null;
@@ -32,7 +35,7 @@ const getKind = (contentTypes: Schema.ContentType[], uid: Common.UID.ContentType
 };
 
 const LinkField = ({ value: initialValue, name, onChange }: LinkFieldProps) => {
-	const [value, setValue] = useState<Partial<LinkValue>>(initialValue ? JSON.parse(initialValue) : null);
+	const [value, setValue] = useState<DeepPartial<LinkValue>>(initialValue ? JSON.parse(initialValue) : null);
 	const [expanded, setExpanded] = useState<boolean>(!value);
 	const slug = useSlug(value);
 
@@ -41,7 +44,7 @@ const LinkField = ({ value: initialValue, name, onChange }: LinkFieldProps) => {
 
 	// Methods.
 	const update = useCallback(
-		(value: Partial<LinkValue>) => {
+		(value: DeepPartial<LinkValue>) => {
 			setValue(value);
 			onChange({ target: { name, type: 'json', value: JSON.stringify(value) } });
 		},
@@ -54,25 +57,67 @@ const LinkField = ({ value: initialValue, name, onChange }: LinkFieldProps) => {
 	// }, [update]);
 
 	const resetLink = useCallback(() => {
-		update({ ...value, id: undefined, uid: undefined, kind: undefined });
+		update({ ...value, type: 'internal', link: {} });
 	}, [update]);
 
 	// - Change.
 	const handleOnSlugChange = (id: Entity.ID) => {
-		if (!value || !value.uid || !value.kind) {
+		if (
+			!value ||
+			value.type === 'external' ||
+			(value.type === 'internal' && !value.link?.uid) ||
+			(value.type === 'internal' && !value.link?.kind)
+		) {
 			return;
 		}
 
-		update({ ...value, id });
+		const newValue: DeepPartial<LinkValue> = {
+			...value,
+			type: 'internal',
+			link: { ...((value.type === 'internal' && value.link) ?? {}), id },
+		};
+
+		update(newValue);
 	};
 
 	const handleOnContentTypeChange = async (uid: Common.UID.ContentType) => {
-		setValue({
+		if (!value || value.type === 'external') {
+			return;
+		}
+
+		const newValue: DeepPartial<LinkValue> = {
 			...value,
-			id: undefined,
-			uid: uid,
-			kind: getKind(contentTypes, uid),
-		});
+			type: 'internal',
+			link: {
+				id: undefined,
+				uid,
+				kind: getKind(contentTypes, uid),
+			},
+		};
+
+		setValue(newValue);
+	};
+
+	const handleOnTypeChange = (type: string) => {
+		if (type === 'internal') {
+			update({
+				label: value?.label || '',
+				target: value?.target || 'self',
+				type: 'internal',
+				link: {},
+			});
+		} else if (type === 'external') {
+			update({
+				label: value?.label || '',
+				target: value?.target || 'self',
+				type: 'external',
+				link: '',
+			});
+		}
+	};
+
+	const handleOnTargetChange = (target: string) => {
+		update({ ...value, target: target as 'self' | 'blank' });
 	};
 
 	const handleOnInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -80,8 +125,29 @@ const LinkField = ({ value: initialValue, name, onChange }: LinkFieldProps) => {
 		update({ ...value, label: inputValue });
 	};
 
+	const handleOnLinkInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const inputValue = e.target.value;
+		update({ ...value, type: 'external', link: inputValue });
+	};
+
+	const handleOnAddLinkClick = () => {
+		update({
+			label: '',
+			type: 'internal',
+			target: 'self',
+			link: {
+				id: undefined,
+				uid: undefined,
+				kind: undefined,
+			},
+		});
+	};
+
 	// Render.
-	const link = useMemo(() => (slug ? `href → ${slug}` : 'Please select a slug'), [slug, value]);
+	const link = useMemo(
+		() => (slug ? `${slug} ${value?.target === 'blank' ? '(opens a new tab)' : ''}` : 'No link selected'),
+		[slug, value]
+	);
 
 	if (loading) {
 		return <p>TODO loading...</p>;
@@ -92,47 +158,68 @@ const LinkField = ({ value: initialValue, name, onChange }: LinkFieldProps) => {
 			<Stack spacing={2}>
 				<FieldLabel>{name}</FieldLabel>
 				<Box padding={6} background="neutral100" borderColor="neutral200" borderRadius="4px">
-					<Stack spacing={4}>
-						<TextInput value={value?.label} onChange={handleOnInputChange} label="Label" placeholder="Label" />
-						<Stack spacing={2}>
-							<FieldLabel>Link</FieldLabel>
-							<Accordion id="acc-1" expanded={expanded} onToggle={() => setExpanded((s) => !s)} size="S">
-								<AccordionToggle
-									togglePosition="left"
-									title={value?.label || 'Label'}
-									description={link}
-									action={
-										<Flex gap={2}>
-											<LinkIconButton value={value} />
-											<IconButton onClick={resetLink} label="Reset link" icon={<Trash />} />
-										</Flex>
-									}
-								/>
-								<AccordionContent padding={4} background="neutral0">
-									<Stack spacing={2}>
-										<Select placeholder="Select a content type." value={value?.uid} onChange={handleOnContentTypeChange}>
-											{contentTypes.map((contentType) => (
-												<Option key={contentType.uid} value={contentType.uid}>
-													{contentType.globalId}
-												</Option>
-											))}
-										</Select>
-										{value && value.uid && value.kind && (
-											<ComboboxSlugs
-												value={{
-													id: value.id,
-													uid: value.uid,
-													kind: value.kind,
-													label: value.label,
-												}}
-												onChange={handleOnSlugChange}
-											/>
-										)}
-									</Stack>
-								</AccordionContent>
-							</Accordion>
+					{value === null ? (
+						<Button size="M" onClick={handleOnAddLinkClick}>
+							Add link
+						</Button>
+					) : (
+						<Stack spacing={4}>
+							<TextInput value={value.label} onChange={handleOnInputChange} label="Label" placeholder="Label" />
+							<Select required label="Type" placeholder="Type" value={value?.type} onChange={handleOnTypeChange}>
+								<Option value="internal">Internal</Option>
+								<Option value="external">External</Option>
+							</Select>
+							{value?.type === 'internal' ? (
+								<Stack spacing={1}>
+									<FieldLabel required>Link</FieldLabel>
+									<Accordion id="acc-1" expanded={expanded} onToggle={() => setExpanded((s) => !s)} size="S">
+										<AccordionToggle
+											togglePosition="left"
+											title={value.label || 'Please insert a label'}
+											description={link}
+											action={
+												<Flex gap={2}>
+													<LinkIconButton value={value} />
+													<IconButton onClick={resetLink} label="Reset link" icon={<Trash />} />
+												</Flex>
+											}
+										/>
+										<AccordionContent padding={4} background="neutral0">
+											<Stack spacing={2}>
+												<Select placeholder="Select a content type." value={value.link?.uid} onChange={handleOnContentTypeChange}>
+													{contentTypes.map((contentType) => (
+														<Option key={contentType.uid} value={contentType.uid}>
+															{contentType.globalId}
+														</Option>
+													))}
+												</Select>
+												{value && value.link && value.link.uid && value.link.kind && (
+													<ComboboxSlugs
+														value={{
+															id: value.link.id,
+															uid: value.link.uid,
+															kind: value.link.kind,
+															label: value.label,
+														}}
+														onChange={handleOnSlugChange}
+													/>
+												)}
+											</Stack>
+										</AccordionContent>
+									</Accordion>
+								</Stack>
+							) : (
+								<>
+									<TextInput onChange={handleOnLinkInputChange} value={value.link} label="Link" />
+									<Link href={slug} isExternal={value.target === 'blank'}>{slug}</Link>
+								</>
+							)}
+							<Select required label="Target" placeholder="Type" value={value?.target ?? 'self'} onChange={handleOnTargetChange}>
+								<Option value="self">Self</Option>
+								<Option value="blank">Blank</Option>
+							</Select>
 						</Stack>
-					</Stack>
+					)}
 				</Box>
 			</Stack>
 		</Field>

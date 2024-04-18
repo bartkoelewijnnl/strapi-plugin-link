@@ -16,10 +16,7 @@ export const getShadowTypes = ({ strapi }: { strapi: Strapi }): ShadowTypes => {
 		if (Boolean(fields.length)) {
 			return {
 				...a,
-				[uid]: {
-					fields: fields,
-					globalId: value.globalId,
-				},
+				[uid]: { fields: fields, globalId: value.globalId },
 			};
 		}
 

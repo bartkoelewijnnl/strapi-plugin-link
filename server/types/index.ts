@@ -7,18 +7,25 @@ export type Slug = {
 	uid: Common.UID.ContentType;
 };
 
-export type SlugOptions = {
-	uid: Common.UID.ContentType;
-	kind: Schema.ContentTypeKind;
+export type Setting = {
 	prefix?: string;
-	slug?: string;
-} & (
-	| {
-			kind: 'singleType';
-			slug: string;
-	  }
-	| {
-			kind: 'collectionType';
-			field: string;
-	  }
-);
+	kind: Schema.ContentTypeKind;
+	enabled?: boolean;
+} & (SettingSingleType | SettingCollectionType);
+
+export type SettingSingleType = {
+	kind: 'singleType';
+	slug: string;
+};
+
+export type SettingCollectionType = {
+	kind: 'collectionType';
+
+	// Possible slug attributes.
+	attributes: string[];
+	attribute?: string;
+};
+
+export interface Settings {
+	[uid: Common.UID.ContentType]: Setting;
+}

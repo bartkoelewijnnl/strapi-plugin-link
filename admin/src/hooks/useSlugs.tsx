@@ -5,11 +5,13 @@ import type { Slug, SlugOptions } from '../../../server/types';
 import pluginId from '../pluginId';
 import useLoadingModel from './useLoadingModel';
 
-export const useSlugs = (options: SlugOptions): LoadingModel<Slug[]> => {
+export const useSlugs = (options: SlugOptions): LoadingModel<Slug[]> & { fetch: () => Promise<void> } => {
 	const { post } = useFetchClient();
-	const { state, setError, setData } = useLoadingModel<Slug[]>();
+	const { state, setError, setData, setLoading } = useLoadingModel<Slug[]>();
 
 	const fetch = useCallback(async () => {
+		setLoading();
+		
 		try {
 			const data = (await post(`/${pluginId}/slugs`, options)).data;
 			setData(data);
@@ -23,5 +25,5 @@ export const useSlugs = (options: SlugOptions): LoadingModel<Slug[]> => {
 		fetch();
 	}, [options.uid]);
 
-	return state;
+	return { ...state, fetch };
 };

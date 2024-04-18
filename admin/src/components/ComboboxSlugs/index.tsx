@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { Common, Entity, Schema } from '@strapi/strapi';
-import { Select, Option, Flex, Box } from '@strapi/design-system';
+import { Select, Option, IconButton, Flex, Box } from '@strapi/design-system';
 import useApi from '../../hooks/useApi';
 import LinkIconButton from '../LinkIconButton';
+import { Refresh } from '@strapi/icons';
 
 interface ComboboxSlugsProps {
 	value: { uid: Common.UID.ContentType; kind: Schema.ContentTypeKind; id?: Entity.ID; label?: string };
@@ -10,25 +11,9 @@ interface ComboboxSlugsProps {
 }
 
 const ComboboxSlugs = ({ value, onChange }: ComboboxSlugsProps) => {
-	const { fetchSlugs } = useApi();
 	// TODO: error.
-	const {
-		data: slugs = [],
-		error,
-		loading,
-	} = fetchSlugs(
-		value.kind === 'singleType'
-			? {
-					slug: 'hometodo',
-					kind: 'singleType',
-					uid: value.uid,
-			  }
-			: {
-					kind: 'collectionType',
-					uid: value.uid,
-					field: 'slug',
-			  }
-	);
+	const { fetchSlugs } = useApi();
+	const { data: slugs = [], loading, fetch } = fetchSlugs(value);
 
 	// Life cycle.
 	useEffect(() => {
@@ -43,7 +28,7 @@ const ComboboxSlugs = ({ value, onChange }: ComboboxSlugsProps) => {
 		return <Select placeholder="No slugs available for content type." disabled />;
 	}
 
-	if (loading) {
+	if (loading && !slugs.length) {
 		return <p>sdf</p>;
 	}
 
@@ -58,6 +43,9 @@ const ComboboxSlugs = ({ value, onChange }: ComboboxSlugsProps) => {
 					))}
 				</Select>
 			</Box>
+			{value.kind === 'collectionType' && (
+				<IconButton disabled={loading} onClick={fetch} label="Refresh slug" icon={<Refresh />} />
+			)}
 			<LinkIconButton value={value} />
 		</Flex>
 	);
