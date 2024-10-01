@@ -49,31 +49,31 @@ export const getTypes = ({ shadowTypes, strapi, nexus }: { shadowTypes: ShadowTy
 	});
 
 	return [
-		nexus.objectType({
-			name: 'SlugLinkInternal',
-			auth: false,
-			definition(t: any) {
-				t.nonNull.field('id', { type: 'ID' });
-				t.nonNull.string('uid');
-				t.nonNull.string('kind');
-			},
-		}),
-		nexus.extendType({
-			name: 'SlugLinkExternal',
-			auth: false,
-			definition(t: any) {
-				type: String;
-			},
-		}),
-		nexus.unionType({
-			name: 'SlugLink',
-			definition(t: any) {
-				t.members('SlugLinkInternal', 'SlugLinkExternal');
-			},
-			resolveType: (value: { type: LinkValue['type'] }) => {
-				return value.type === 'internal' ? 'SlugLinkInternal' : 'SlugLinkInternal';
-			},
-		}),
+		// nexus.objectType({
+		// 	name: 'SlugLinkInternal',
+		// 	auth: false,
+		// 	definition(t: any) {
+		// 		t.nonNull.field('id', { type: 'ID' });
+		// 		t.nonNull.string('uid');
+		// 		t.nonNull.string('kind');
+		// 	},
+		// }),
+		// nexus.extendType({
+		// 	name: 'SlugLinkExternal',
+		// 	auth: false,
+		// 	definition(t: any) {
+		// 		t.nonNull.string('slug');
+		// 	},
+		// }),
+		// nexus.unionType({
+		// 	name: 'SlugLink',
+		// 	definition(t: any) {
+		// 		t.members('SlugLinkInternal', 'SlugLinkExternal');
+		// 	},
+		// 	resolveType: (value: { type: LinkValue['type'] }) => {
+		// 		return value.type === 'internal' ? 'SlugLinkInternal' : 'SlugLinkInternal';
+		// 	},
+		// }),
 		nexus.objectType({
 			name: 'Slug',
 			auth: false,
@@ -82,12 +82,12 @@ export const getTypes = ({ shadowTypes, strapi, nexus }: { shadowTypes: ShadowTy
 				t.nonNull.string('type');
 				t.nonNull.string('label');
 				t.nonNull.string('target');
-				t.field('link', {
-					type: 'SlugLink',
-					resolveType: (value: { link: LinkValue['link'] }) => {
-						return value.link;
-					},
-				});
+				// t.field('link', {
+				// 	type: 'SlugLink',
+				// 	resolveType: (value: { link: LinkValue['link'] }) => {
+				// 		return value.link;
+				// 	},
+				// });
 			},
 		}),
 		...types,

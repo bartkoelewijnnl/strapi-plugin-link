@@ -2,8 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 // TODO: Handle errors.
 exports.default = ({ strapi }) => ({
+    // TODO: Async?.
     async getContentTypes(ctx) {
-        ctx.body = await strapi.plugin('link').service('link').getContentTypes();
+        ctx.body = strapi.plugin('link').service('link').getContentTypes();
     },
     async getSlugs(ctx) {
         const { body } = ctx.request;

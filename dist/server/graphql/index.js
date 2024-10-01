@@ -4,7 +4,10 @@ exports.setup = void 0;
 const crud_1 = require("./crud");
 const types_1 = require("./types");
 const setup = ({ strapi }) => {
-    // TODO: check if GraphQL is enabled.
+    const hasGraphQLPlugin = !!strapi.plugin('graphql');
+    if (!hasGraphQLPlugin) {
+        return;
+    }
     const extensionService = strapi.plugin('graphql').service('extension');
     const shadowTypes = (0, crud_1.getShadowTypes)({ strapi });
     // Disable link fields.
@@ -15,9 +18,7 @@ const setup = ({ strapi }) => {
     });
     const extension = ({ nexus }) => {
         const types = (0, types_1.getTypes)({ shadowTypes, strapi, nexus });
-        return {
-            types,
-        };
+        return { types };
     };
     extensionService.use(extension);
 };
